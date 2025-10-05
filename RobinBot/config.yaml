@@ -1,0 +1,46 @@
+mode: "paper"           # "paper" for testing, "robinhood" for live trading
+base_currency: "USD"
+poll_seconds: 15
+
+reporting:
+  daily_status_hour_local: 20
+  signal:
+    enabled: false
+    sender_number: "+15551234567"
+    recipient_number: "+15557654321"
+
+risk:
+  max_open_positions: 4
+  max_daily_notional_usd: 3000
+  enable_stop_loss: false
+  stop_loss_pct: 0.06
+
+strategies:
+  - symbol: "ETH/USD"
+    venue_symbol: "ETH-USD"
+    amount: 0.25
+    buy_price: 1900.0
+    sell_price: 2050.0
+    good_til: "2025-12-31T23:59:00"
+
+  - symbol: "SOL/USD"
+    venue_symbol: "SOL-USD"
+    amount: 2.0
+    buy_price: 140.0
+    sell_price: 152.0
+    good_til: null
+
+  - symbol: "DOGE/USD"
+    venue_symbol: "DOGE-USD"
+    amount: 300.0
+    buy_price: 0.12
+    sell_price: 0.135
+    good_til: null
+
+watchdog:
+  enabled: true
+  pnl_drawdown_window_hours: 24
+  pnl_drawdown_pct: 5.0
+  vol_window_minutes: 60
+  vol_threshold_pct: 2.0
+  max_spread_pct: 0.40
