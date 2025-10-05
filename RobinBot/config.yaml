@@ -1,6 +1,6 @@
 mode: "paper"           # "paper" for testing, "robinhood" for live trading
 base_currency: "USD"
-poll_seconds: 15
+poll_seconds: 2
 
 reporting:
   daily_status_hour_local: 20
@@ -18,9 +18,9 @@ risk:
 strategies:
   - symbol: "ETH/USD"
     venue_symbol: "ETH-USD"
-    amount: 0.25
+    amount: 0.05
     buy_price: 1900.0
-    sell_price: 2050.0
+    sell_price: 1901.0
     good_til: "2025-12-31T23:59:00"
 
   - symbol: "SOL/USD"
