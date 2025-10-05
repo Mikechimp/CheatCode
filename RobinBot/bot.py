@@ -23,10 +23,13 @@ def make_adapter(cfg):
         seed = {st["venue_symbol"]: (st["buy_price"]+st["sell_price"])/2 for st in cfg["strategies"]}
         return PaperAdapter(seed)
     elif mode == "robinhood":
+        from exchange_adapters import RobinhoodAdapter
+        dry = bool(cfg.get("trading", {}).get("dry_run", True))
+        return RobinhoodAdapter(dry_run=dry)
         # You’d pass keys via env vars once you wire the adapter.
-        return RobinhoodAdapter(os.getenv("RH_KEY"), os.getenv("RH_SECRET"))
-    else:
-        raise ValueError("Unknown mode")
+        #return RobinhoodAdapter(os.getenv("RH_KEY"), os.getenv("RH_SECRET"))
+   # else:
+        #raise ValueError("Unknown mode")
 
 def main():
     cfg = load_cfg()
