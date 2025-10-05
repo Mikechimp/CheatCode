@@ -1,4 +1,7 @@
 import time, uuid, random
+import requests
+from tenacity import retry, wait_exponential, stop_after_attempt
+from dotenv import load_dotenv
 
 class Order:
     def __init__(self, venue, venue_symbol, side, price, amount):
@@ -66,29 +69,103 @@ class PaperAdapter:
         return self.try_fill(venue_symbol)
 
 class RobinhoodAdapter:
-    """Skeleton. You wire these to the Robinhood Crypto API.
-    Keep method names compatible with PaperAdapter so the bot code doesn't change."""
-    def __init__(self, api_key=None, api_secret=None):
+    """
+    Safe scaffold:
+      - loads creds from .env
+      - fetch_price(): implement using Robinhood Crypto quote endpoint
+      - place_limit_buy/sell(): will NO-OP if dry_run is True
+      - fetch_open_orders(), poll_and_fill(): reconcile order states
+    Fill the TODOs using the official docs: https://docs.robinhood.com/  (Crypto Trading API)
+    """
+    def __init__(self, dry_run=True):
+        load_dotenv()
         self.venue = "robinhood"
-        # TODO: auth/session bootstrap
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": "PingPongBot/1.0",
+            # Add Authorization header once you obtain a bearer token or HMAC scheme from docs
+            # "Authorization": f"Bearer {os.getenv('RH_ACCESS_TOKEN')}",
+            # "X-API-KEY": os.getenv("RH_API_KEY"),
+        })
+        self.dry_run = dry_run
+        # You will likely set a base URL from docs, e.g.:
+        # self.base = "https://api.robinhood.com"            # Example only — confirm in docs
+        # self.crypto_base = "https://nummus.robinhood.com"   # Example only — confirm in docs
 
-    def fetch_price(self, venue_symbol):
-        # TODO: GET quote for venue_symbol
-        raise NotImplementedError
+    def _idempotency_key(self):
+        return str(uuid.uuid4())
 
-    def place_limit_buy(self, venue_symbol, price, amount, tif="gtc"):
-        # TODO: POST limit buy
-        raise NotImplementedError
+    @retry(wait=wait_exponential(min=0.5, max=8), stop=stop_after_attempt(5))
+    def _get(self, url, **kw):
+        r = self.session.get(url, timeout=10, **kw)
+        r.raise_for_status()
+        return r.json()
 
-    def place_limit_sell(self, venue_symbol, price, amount, tif="gtc"):
-        # TODO: POST limit sell
-        raise NotImplementedError
+    @retry(wait=wait_exponential(min=0.5, max=8), stop=stop_after_attempt(5))
+    def _post(self, url, json=None, **kw):
+        r = self.session.post(url, json=json, timeout=10, **kw)
+        r.raise_for_status()
+        return r.json()
 
-    def fetch_open_orders(self, venue_symbol):
-        # TODO: GET open orders
-        raise NotImplementedError
+    # ---------- REQUIRED BY THE BOT ----------
+    def fetch_price(self, venue_symbol: str) -> float:
+        """
+        TODO: Implement using Robinhood Crypto Quote endpoint.
+        - Map venue_symbol like 'ETH-USD' to the symbol format the API expects.
+        - Return a float price (last/mark/bid/ask per your preference).
+        """
+        raise NotImplementedError("Fill fetch_price() with the official quote endpoint.")
 
-    def poll_and_fill(self, venue_symbol):
-        """For live: just return any newly closed orders by reconciling open->closed via API."""
-        # Implement by fetching order statuses and returning any transitions to 'filled'
-        raise NotImplementedError
+    def place_limit_buy(self, venue_symbol: str, price: float, amount: float, tif: str = "gtc"):
+        """
+        TODO: Implement with Robinhood limit BUY order endpoint.
+        Respect self.dry_run: if True, do not POST; just return a fake order dict so the bot continues its loop.
+        """
+        if self.dry_run:
+            # emulate an 'open' order object, bot tracks it until 'filled' via poll_and_fill()
+            return {
+                "id": self._idempotency_key(),
+                "venue": self.venue,
+                "venue_symbol": venue_symbol,
+                "side": "buy",
+                "price": float(price),
+                "amount": float(amount),
+                "status": "open",
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        # LIVE: build payload from docs; include idempotency key if supported
+        # payload = {...}
+        # return self._post(f"{self.crypto_base}/orders", json=payload)
+        raise NotImplementedError("Fill place_limit_buy() for live trading per docs.")
+
+    def place_limit_sell(self, venue_symbol: str, price: float, amount: float, tif: str = "gtc"):
+        if self.dry_run:
+            return {
+                "id": self._idempotency_key(),
+                "venue": self.venue,
+                "venue_symbol": venue_symbol,
+                "side": "sell",
+                "price": float(price),
+                "amount": float(amount),
+                "status": "open",
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+        # LIVE: build payload and POST to orders endpoint
+        raise NotImplementedError("Fill place_limit_sell() for live trading per docs.")
+
+    def fetch_open_orders(self, venue_symbol: str):
+        """
+        TODO: Implement using list-open-orders endpoint filtered by symbol.
+        In dry_run, just return [] so the bot re-arms as needed, or track a local cache if you prefer.
+        """
+        return []
+
+    def poll_and_fill(self, venue_symbol: str):
+        """
+        LIVE: Reconcile open->filled by querying order status.
+        DRY_RUN: return [] to avoid generating fills (you’re doing quotes-only smoke testing).
+        """
+        return []
+

@@ -1,6 +1,9 @@
-mode: "paper"           # "paper" for testing, "robinhood" for live trading
+mode: "robinhood"           # "paper" for testing, "robinhood" for live trading
 base_currency: "USD"
-poll_seconds: 2
+poll_seconds: 5
+
+trading:
+  dry_run: true 
 
 reporting:
   daily_status_hour_local: 20
