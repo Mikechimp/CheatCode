@@ -1,0 +1,40 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite
+*.sqlite3
+
+# --- Virtual Environment ---
+.venv/
+env/
+venv/
+
+# --- Environment & Secrets ---
+.env
+*.key
+*.pem
+*.token
+secrets.json
+
+# --- Databases & Cache ---
+state.db
+*.db
+*.cache
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- Build & Packages ---
+dist/
+build/
+*.egg-info/
+
+# --- Optional: Signal logs or runtime data ---
+signal-cli/
+logs/
